@@ -4,27 +4,44 @@ const service = require('./enfermeras-servicio');
 const respuesta = require('../../respuestas/respuesta')
 
 
-//
+//get 
 router.get('/', async (req, res) => {
     try {
-        const dato = req.query.dato;
-        const respuesta = await service.getAllTables();
-        respuesta.success(req, res, respuesta, 200);
+        const respon = await service.getAllTables();
+        respuesta.success(req, res, respon, 200);
     } catch (err) {
         console.error("error en el controller de enfermeras", err);
         respuesta.error(req, res, err, 500)
     }
 });
 
+router.get('/buscar', async (req, res) => {
+    try {
+        const { codigo } = req.query;
+        if (!codigo) {
+            return respuesta.error(req, res, { message: 'Falta el parámetro codigo' }, 400);
+        }
+        const respon = await service.searchByCode(codigo);
+        respuesta.success(req, res, respon, 200);
+    } catch (err) {
+        console.error("error en el controller de enfermeras", err);
+        respuesta.error(req, res, err, 500)
+    }
+})
+
 
 //post crear
 router.post('/crear', async (req, res) => {
     try {
-        const reporte = req.query.reporte;
-        const respuesta = await service.createReport(reporte);
-        respuesta.success(req, res, respuesta, 200);
+        const reporte = req.body;
+        const respon = await service.createReport(reporte);
+        /*if (!respon.success) {
+            err = "codigo invalido";
+            return respuesta.error(req, res, err, 401);
+        }*/
+        respuesta.success(req, res, respon, 200);
     } catch (err) {
-        console.err("error en el controller de enfermeras", err);
+        console.error("error en el controller de enfermeras", err);
         respuesta.error(req, res, err, 500)
     }
 });
@@ -34,10 +51,22 @@ router.post('/crear', async (req, res) => {
 router.put('/modificar', async (req, res) => {
     try {
         const comentario = req.body;
-        const respuesta = await service.modifyReport(comentario);
-        respuesta.success(req, res, respuesta, 200);
+        const respon = await service.modifyReport(comentario);
+        respuesta.success(req, res, respon, 200);
     } catch (error) {
-        console.error("error en el controller de enfermeras", err);
-        respuesta.error(req, res, err, 500)
+        console.error("error en el controller de enfermeras", error);
+        respuesta.error(req, res, error, 500)
     }
-})
+});
+
+router.get('/reporteEspecifico', async (req, res) => {
+    try {
+        const { id } = req.query;
+        const respon = await service.searchById(id);
+        respuesta.success(req, res, respon, 200)
+    } catch (error) {
+        console.error("error en el controller de enfermeras", error);
+        respuesta.error(req, res, error, 500)
+    }
+});
+module.exports = router;

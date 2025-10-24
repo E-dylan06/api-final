@@ -11,6 +11,7 @@ const triajeRouter = require('./modulos/Triaje/triaje-controlador');
 const loginRouter = require('./modulos/auth/autentificacion-controlador');
 const tipoEdadRouter = require('./modulos/TipoEdad/TipoEdad-controlador');
 const reporteRouter = require('./modulos/Reportes/reporte-controlador');
+const enfermeraRouter = require('./modulos/Enfermeras/enfermeras-controlador')
 
 const app = express();
 
@@ -29,8 +30,9 @@ app.use('/api/documentos', documentosRouter);
 app.use('/api/triaje', triajeRouter);
 app.use('/api/servicios', serviciosRouter);
 app.use('/api/login', loginRouter);
-app.use('/api/TipoEdad',tipoEdadRouter);
-app.use('/api/reporte',reporteRouter);
+app.use('/api/TipoEdad', tipoEdadRouter);
+app.use('/api/reporte', reporteRouter);
+app.use('/api/enfermera', enfermeraRouter);
 
 
 

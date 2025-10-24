@@ -1,38 +1,39 @@
 const poolPromise = require('../../infraestructura/conexionDB');
 const sql = require('mssql');
 
-export async function getAllTables(params) {
+async function getAllTables() {
     try {
         const pool = await poolPromise;
         const result = await pool.request()
-            .input()
             .query(`
                     SELECT 
                     IdReporteEnfermera,
                     Codigo,
-                    FechaHora
-                    Turno
+                    Turno,
+                    FechaHora                    
                     FROM ReporteEnfermera
                 `)
-        return result.recordset;
+        return { listaReportes: result.recordset, count: result.recordset.length };
     } catch (error) {
         console.error("hubo un error en el segmenteo de getALL de enfermeras", error);
         throw error;
     }
 }
 
-export async function createReport(reporte) {
+async function createReport(reporte) {
     try {
-        const pool = await sql.poolPromise;
+        const enfermerasJSON = JSON.stringify(reporte.enfermerasTurno);
+        const tecnicosJSON = JSON.stringify(reporte.tecnicosTurno);
+
+        const pool = await poolPromise;
         const result = await pool.request()
             .input('IdUsuarioWeb', sql.Int, reporte.idWeb)
             .input('IdEmpleado', sql.Int, reporte.idEmpleado)
             .input('Turno', sql.Char(1), reporte.turno)
-            .input('EnfermerasTurno', sql.VarChar(sql.MAX), reporte.enfermerasTurno)
-            .input('TecnicosTurno', sql.VarChar(sql.MAX), reporte.tecnicosTurno)
+            .input('EnfermerasTurno', sql.VarChar(sql.MAX), enfermerasJSON)
+            .input('TecnicosTurno', sql.VarChar(sql.MAX), tecnicosJSON)
             .input('Reporte', sql.NVarChar(sql.MAX), reporte.informe)
             .input('Observacion', sql.NVarChar(sql.MAX), reporte.observacion)
-            .input('Comentarios', sql.NVarChar(sql.MAX), reporte.comentarios)
             .query(`
                 INSERT INTO ReporteEnfermera (
                     IdUsuarioWeb,
@@ -41,8 +42,7 @@ export async function createReport(reporte) {
                     EnfermerasTurno,
                     TecnicosTurno,
                     Reporte,
-                    Observacion,
-                    Comentarios
+                    Observacion
                 )
                 VALUES (
                     @IdUsuarioWeb,
@@ -51,8 +51,7 @@ export async function createReport(reporte) {
                     @EnfermerasTurno,
                     @TecnicosTurno,
                     @Reporte,
-                    @Observacion,
-                    @Comentarios
+                    @Observacion
                 )
             `);
         return {
@@ -64,7 +63,7 @@ export async function createReport(reporte) {
     }
 }
 
-export async function update(id, comentariosJSON) {
+async function update(id, comentariosJSON) {
     try {
         const pool = await poolPromise;
 
@@ -84,7 +83,7 @@ export async function update(id, comentariosJSON) {
 }
 
 
-export async function bringsComments(id) {
+async function bringsComments(id) {
     try {
         const pool = await poolPromise;
         const result = await pool.request()
@@ -102,6 +101,105 @@ export async function bringsComments(id) {
     }
 }
 
+
+async function searchByCode(codigo) {
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('Codigo', sql.VarChar(40), codigo)
+            .query(`
+                SELECT 
+                IdReporteEnfermera,
+                Codigo,
+                FechaHora,
+                Turno
+                FROM ReporteEnfermera
+                WHERE Codigo = @Codigo
+            `)
+        return { reporte: result.recordset[0] };
+    } catch (error) {
+
+        console.error("hubo un error en el segmenteo de searchByCode de enfermeras", error);
+        throw error;
+    }
+}
+
+
+
+async function searchById(id) {
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('Id', sql.Int, id)
+            .query(`
+                    SELECT
+                    r.IdReporteEnfermera,
+                    ISNULL(e.ApellidoPaterno, '') + ' ' + 
+                    ISNULL(e.ApellidoMaterno, '') + ' ' + 
+                    ISNULL(e.Nombres, '') AS NombreCompleto,    
+                    e.DNI AS DniEmpleado, 
+                    r.Turno,
+                    r.Codigo,
+                    r.FechaHora,
+                    r.EnfermerasTurno,
+                    r.TecnicosTurno,
+                    r.Reporte,
+                    r.Observacion,
+                    r.Comentarios
+                    FROM ReporteEnfermera r 
+                    INNER JOIN Empleados AS e ON e.IdEmpleado = r. IdEmpleado
+                    WHERE Codigo = @Codigo
+                `);
+        return result.recordset[0];
+    } catch (error) {
+        console.error("hubo un error en el segmenteo de searchById de enfermeras", error);
+        throw error;
+    }
+}
+
+async function searchEnfermeras(dnis = []) {
+    if (!dnis.length || dnis.length === 0) return [];
+    try {
+        const pool = await poolPromise
+        const result = await pool.request()
+            .input('Dnis', sql.NVarChar(sql.MAX), JSON.stringify(dnis))
+            .query(`
+                SELECT
+                    ISNULL(ApellidoPaterno, '') + ' ' +
+                    ISNULL(ApellidoMaterno, '') + ' ' +
+                    ISNULL(Nombres, '') AS NombreCompleto,
+                    DNI
+                FROM Empleados
+                WHERE DNI IN (${dnis.map(d => `'${d}'`).join(',')})
+                `)
+        return result.recordset
+    } catch (error) {
+        console.error("hubo un error en el segmenteo de searchById de enfermeras", error);
+        throw error;
+    }
+}
+
+async function searchTecnicos(dnis = []) {
+    if (dnis.length === 0) return [];
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('Dnis', sql.NVarChar(sql.MAX), JSON.stringify(dnis))
+            .query(`
+                SELECT
+                    DNI,
+                    ISNULL(ApellidoPaterno,'') + ' ' +
+                    ISNULL(ApellidoMaterno,'') + ' ' +
+                    ISNULL(Nombres,'') AS NombreCompleto
+                FROM Empleados
+                WHERE DNI IN (${dnis.map(d => `'${d}'`).join(',')})
+            `);
+        return result.recordset;
+    } catch (error) {
+        console.error("Error en searchTecnicos", error);
+        throw error;
+    }
+}
 
 /*
 CREATE TABLE ReporteEnfermera (
@@ -135,3 +233,13 @@ select  idEmpleado FROM Empleados where nroDocumento = ?
 insert into ReporteEnfermera(IdUsuarioWEb,IdEmpleado,Observación,Reporte) VALUES ()
  */
 
+module.exports = {
+    bringsComments,
+    createReport,
+    getAllTables,
+    update,
+    searchByCode,
+    searchById,
+    searchEnfermeras,
+    searchTecnicos
+}
