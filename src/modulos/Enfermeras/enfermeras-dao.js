@@ -1,7 +1,7 @@
 const poolPromise = require('../../infraestructura/conexionDB');
 const sql = require('mssql');
 
-async function getAllTables(params) {
+export async function getAllTables(params) {
     try {
         const pool = await poolPromise;
         const result = await pool.request()
@@ -21,7 +21,7 @@ async function getAllTables(params) {
     }
 }
 
-async function create(reporte) {
+export async function createReport(reporte) {
     try {
         const pool = await sql.poolPromise;
         const result = await pool.request()
@@ -29,7 +29,7 @@ async function create(reporte) {
             .input('IdEmpleado', sql.Int, reporte.idEmpleado)
             .input('Turno', sql.Char(1), reporte.turno)
             .input('EnfermerasTurno', sql.VarChar(sql.MAX), reporte.enfermerasTurno)
-            .input('TecnicosTurno', sql.VarChar(sql.MAX), reporte.tecnicosTurno) // ojo con la minúscula
+            .input('TecnicosTurno', sql.VarChar(sql.MAX), reporte.tecnicosTurno)
             .input('Reporte', sql.NVarChar(sql.MAX), reporte.informe)
             .input('Observacion', sql.NVarChar(sql.MAX), reporte.observacion)
             .input('Comentarios', sql.NVarChar(sql.MAX), reporte.comentarios)
@@ -55,10 +55,8 @@ async function create(reporte) {
                     @Comentarios
                 )
             `);
-
         return {
-            success: true,
-            rowsAffected: result.rowsAffected
+            success: true
         };
     } catch (error) {
         console.error("Hubo un error en el segmento create de enfermeras:", error);
@@ -66,18 +64,42 @@ async function create(reporte) {
     }
 }
 
-
-
-async function update(data) {
+export async function update(id, comentariosJSON) {
     try {
         const pool = await poolPromise;
-        const result =  await pool.request()
-        .input()
+
+        const result = await pool.request()
+            .input('Id', sql.Int, id)
+            .input('Comentario', sql.NVarChar(sql.MAX), comentariosJSON)
+            .query(`
+            UPDATE ReporteEnfermera
+            SET Comentarios = @Comentario
+            WHERE IdReporteEnfermera = @Id
+            `)
+        console.log("✅ Comentarios actualizados correctamente");
     } catch (error) {
         console.error("hubo un error en el segmenteo de update de enfermeras", error);
         throw error;
     }
+}
 
+
+export async function bringsComments(id) {
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('Id', sql.Int, id)
+            .query(`
+            SELECT Comentarios 
+            FROM
+            ReporteEnfermera
+            WHERE IdReporteEnfermera = @Id;
+            `);
+        return result.recordset;
+    } catch (error) {
+        console.error("hubo un error en el segmenteo de bringsComments de enfermeras", error);
+        throw error;
+    }
 }
 
 
@@ -104,9 +126,6 @@ CREATE TABLE ReporteEnfermera (
         FOREIGN KEY (IdEmpleado) REFERENCES Empleados(IdEmpleado)
 );
 
-
-
-
 métodos relacionados a esta tabla para plasmarlo en el front y back
 
 método de buscar empleado mediante dni, y que tenga su rol propio en la tabla ROlweb
@@ -116,8 +135,3 @@ select  idEmpleado FROM Empleados where nroDocumento = ?
 insert into ReporteEnfermera(IdUsuarioWEb,IdEmpleado,Observación,Reporte) VALUES ()
  */
 
-module.exports = {
-    create,
-    getAllTables,
-    update
-}
