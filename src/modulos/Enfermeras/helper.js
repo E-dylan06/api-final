@@ -31,7 +31,7 @@ function jsonReporte(reporte, datoEnfermeras = [], datosTecnicas = []) {
         tecnicasTurno: datosTecnicas,
         datosReporte: reporte.Reporte,
         observaciones: reporte.Observacion,
-        comentarios: reporte.Comentarios
+        comentarios: reporte.Comentarios ?? "Sin comentarios"
     }
 }
 
