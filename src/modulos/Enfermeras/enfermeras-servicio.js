@@ -6,9 +6,9 @@ function getAllTables() {
 }
 
 
-    function createReport(reporte) {
-        return db.createReport(reporte)
-    }
+function createReport(reporte) {
+    return db.createReport(reporte)
+}
 
 
 async function modifyReport(dato) {
@@ -42,50 +42,23 @@ async function searchByCode(codigo) {
 }
 
 async function searchById(id) {
-    // 1️⃣ Obtener datos generales del reporte
     const reporte = await dao.searchById(id);
     if (!reporte) {
         const error = new Error(`El reporte con ID '${id}' no existe.`);
         error.status = 404;
         throw error;
     }
+    const listaDNIEnfermeras = JSON.parse(reporte.EnfermerasTurno).map(e => e.dni);
+    const listaDNITecnicos = JSON.parse(reporte.TecnicosTurno).map(t => t.dni);
 
-    // 2️⃣ Convertir los arrays de DNIs a objetos
-    const listaDNIEnfermeras = JSON.parse(reporte.EnfermerasTurno || '[]');
-    const listaDNITecnicos = JSON.parse(reporte.TecnicosTurno || '[]');
+    const enfermeras = await db.searchEnfermeras(listaDNIEnfermeras);
+    const tecnicos = await db.searchTecnicos(listaDNITecnicos);
+    const listaEnfermeras = dnis(enfermeras);
+    const listaTecnicos = dnis(tecnicos);
 
-    const enfermeras = await dao.searchEnfermeras(listaDNIEnfermeras);
-    const tecnicos = await dao.searchTecnicos(listaDNITecnicos);
-
-    // 3️⃣ Aplicar helper para estandarizar
-    const listaEnfermeras = mapDNIsToObjects(enfermeras);
-    const listaTecnicos = mapDNIsToObjects(tecnicos);
-
-    // 4️⃣ Armar el JSON final
-    return {
-        idReporte: reporte.IdReporteEnfermera,
-        codigo: reporte.Codigo,
-        fechaHora: reporte.FechaHora,
-        turno: reporte.Turno,
-        empleado: {
-            nombreCompleto: reporte.NombreCompleto,
-            dni: reporte.DNI
-        },
-        Enfermeras: listaEnfermeras,
-        Tecnicos: listaTecnicos,
-        reporte: reporte.Reporte,
-        observacion: reporte.Observacion,
-        comentarios: JSON.parse(reporte.Comentarios || '[]')
-    };
+    const resultado = helper.jsonReporte(reporte, listaEnfermeras, listaTecnicos);
+    return resultado;
 }
-
-
-
-
-
-
-
-
 module.exports = {
     createReport,
     getAllTables,

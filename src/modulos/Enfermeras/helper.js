@@ -12,15 +12,32 @@ function helper(dato, comentarios = []) {
     return comentarios;
 }
 
-
-function mapDNIsToObjects(lista = []) {
+function dnis(lista = []) {
     return lista.map(item => ({
         nombreCompleto: item.NombreCompleto,
-        dni: item.DNI
-    }));
+        dnis: item.DNI
+    }))
 }
+
+function jsonReporte(reporte, datoEnfermeras = [], datosTecnicas = []) {
+    return {
+        idReporte: reporte.IdReporteEnfermera,
+        encargadaNombre: reporte.NombreCompleto,
+        encargadaDni: reporte.DniEmpleado,
+        turno: reporte.Turno,
+        codigo: reporte.Codigo,
+        fechaHora: reporte.FechaHora,
+        enfermerasTurno: datoEnfermeras,
+        tecnicasTurno: datosTecnicas,
+        datosReporte: reporte.Reporte,
+        observaciones: reporte.Observacion,
+        comentarios: reporte.Comentarios
+    }
+}
+
 
 module.exports = {
     helper,
-    mapDNIsToObjects
+    dnis,
+    jsonReporte
 };

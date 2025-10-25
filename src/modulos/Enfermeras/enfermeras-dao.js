@@ -148,7 +148,7 @@ async function searchById(id) {
                     r.Comentarios
                     FROM ReporteEnfermera r 
                     INNER JOIN Empleados AS e ON e.IdEmpleado = r. IdEmpleado
-                    WHERE Codigo = @Codigo
+                    WHERE IdReporteEnfermera = @Id
                 `);
         return result.recordset[0];
     } catch (error) {
@@ -161,17 +161,24 @@ async function searchEnfermeras(dnis = []) {
     if (!dnis.length || dnis.length === 0) return [];
     try {
         const pool = await poolPromise
-        const result = await pool.request()
-            .input('Dnis', sql.NVarChar(sql.MAX), JSON.stringify(dnis))
-            .query(`
+        const request = pool.request();
+
+        const param = dnis.map((dni, index) => {
+            const paramName = `dni${index}`;
+            request.input(paramName, sql.VarChar(20), dni);
+            return `@${paramName}`
+        });
+        const query = `
                 SELECT
                     ISNULL(ApellidoPaterno, '') + ' ' +
                     ISNULL(ApellidoMaterno, '') + ' ' +
                     ISNULL(Nombres, '') AS NombreCompleto,
                     DNI
                 FROM Empleados
-                WHERE DNI IN (${dnis.map(d => `'${d}'`).join(',')})
-                `)
+                WHERE DNI IN (${param.join(',')})
+                `;
+        const result = await request.query(query);
+
         return result.recordset
     } catch (error) {
         console.error("hubo un error en el segmenteo de searchById de enfermeras", error);
@@ -182,18 +189,24 @@ async function searchEnfermeras(dnis = []) {
 async function searchTecnicos(dnis = []) {
     if (dnis.length === 0) return [];
     try {
-        const pool = await poolPromise;
-        const result = await pool.request()
-            .input('Dnis', sql.NVarChar(sql.MAX), JSON.stringify(dnis))
-            .query(`
+        const pool = await poolPromise
+        const request = pool.request();
+
+        const param = dnis.map((dni, index) => {
+            const paramName = `dni${index}`;
+            request.input(paramName, sql.VarChar(20), dni);
+            return `@${paramName}`
+        });
+        const query = `
                 SELECT
                     DNI,
                     ISNULL(ApellidoPaterno,'') + ' ' +
                     ISNULL(ApellidoMaterno,'') + ' ' +
                     ISNULL(Nombres,'') AS NombreCompleto
                 FROM Empleados
-                WHERE DNI IN (${dnis.map(d => `'${d}'`).join(',')})
-            `);
+                WHERE DNI IN (${param.join(',')})
+            `;
+        const result = await request.query(query);
         return result.recordset;
     } catch (error) {
         console.error("Error en searchTecnicos", error);

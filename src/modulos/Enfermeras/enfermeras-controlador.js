@@ -62,6 +62,9 @@ router.put('/modificar', async (req, res) => {
 router.get('/reporteEspecifico', async (req, res) => {
     try {
         const { id } = req.query;
+        if (!id) {
+            return respuesta.error(req, res, "Debe proporcionar un ID válido", 400);
+        }
         const respon = await service.searchById(id);
         respuesta.success(req, res, respon, 200)
     } catch (error) {
