@@ -42,7 +42,7 @@ async function searchByCode(codigo) {
 }
 
 async function searchById(id) {
-    const reporte = await dao.searchById(id);
+    const reporte = await db.searchById(id);
     if (!reporte) {
         const error = new Error(`El reporte con ID '${id}' no existe.`);
         error.status = 404;
@@ -53,8 +53,8 @@ async function searchById(id) {
 
     const enfermeras = await db.searchEnfermeras(listaDNIEnfermeras);
     const tecnicos = await db.searchTecnicos(listaDNITecnicos);
-    const listaEnfermeras = dnis(enfermeras);
-    const listaTecnicos = dnis(tecnicos);
+    const listaEnfermeras = helper.dnis(enfermeras);
+    const listaTecnicos = helper.dnis(tecnicos);
 
     const resultado = helper.jsonReporte(reporte, listaEnfermeras, listaTecnicos);
     return resultado;

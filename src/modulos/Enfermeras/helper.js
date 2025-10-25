@@ -20,6 +20,7 @@ function dnis(lista = []) {
 }
 
 function jsonReporte(reporte, datoEnfermeras = [], datosTecnicas = []) {
+    const comentarios = reporte.Comentarios ? JSON.parse(reporte.Comentarios) : [];
     return {
         idReporte: reporte.IdReporteEnfermera,
         encargadaNombre: reporte.NombreCompleto,
@@ -31,7 +32,8 @@ function jsonReporte(reporte, datoEnfermeras = [], datosTecnicas = []) {
         tecnicasTurno: datosTecnicas,
         datosReporte: reporte.Reporte,
         observaciones: reporte.Observacion,
-        comentarios: reporte.Comentarios ?? "Sin comentarios"
+        cantidadComentarios: comentarios.length,
+        comentarios
     }
 }
 
