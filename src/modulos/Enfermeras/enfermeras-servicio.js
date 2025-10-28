@@ -19,16 +19,23 @@ async function modifyReport(dato) {
     if (contenido.length > 0 && contenido[0].Comentarios) {
         comentarios = JSON.parse(contenido[0].Comentarios);
     }
+    console.log(dato);
+    const empleado = parseInt(await db.searchUserWeb(dato.idWeb));
+    console.log(empleado)
+    const datosEmpleado = await db.searchForWorker(empleado);
+    console.log(datosEmpleado)
 
-    const comentariosNuevos = helper.helper(dato, comentarios);
+    const comentariosNuevos = helper.helper(dato, comentarios, datosEmpleado);
 
-    await db.update(dato.id, JSON.stringify(comentariosNuevos));
+    await db.update(dato.idReporte, JSON.stringify(comentariosNuevos));
 
     return {
         mensaje: "✅ Comentario agregado correctamente",
         totalComentarios: comentariosNuevos.length
     };
 }
+
+
 
 
 async function searchByCode(codigo) {

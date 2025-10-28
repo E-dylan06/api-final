@@ -177,7 +177,7 @@ async function filterTriaje(filtros) {
             .input("TipoPaciente", sql.VarChar(10), nullable(filtros.TipoPaciente))
             .query(`
             SELECT 
-                ROW_NUMBER() OVER (ORDER BY t.FechaHora DESC) + @Skip AS Nro,
+                ROW_NUMBER() OVER (ORDER BY t.FechaHora DESC) AS Nro,
                 t.IdTriaje,
                 t.FechaHora,
 LTRIM(RTRIM(

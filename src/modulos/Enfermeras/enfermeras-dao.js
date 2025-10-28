@@ -214,6 +214,55 @@ async function searchTecnicos(dnis = []) {
     }
 }
 
+
+//dao empleados XD
+async function searchForWorker(id) {
+    try {
+        const pool = await poolPromise;
+        const result = await pool.request()
+            .input('id', sql.Int, id)
+            .query(`
+                SELECT
+                IdEmpleado as idEmpleado,
+                ISNULL(ApellidoPaterno, '') + ' ' +
+                ISNULL(ApellidoMaterno, '') + ' ' +
+                ISNULL(Nombres, '') AS nombreCompleto,
+                DNI AS dni
+                FROM  empleados
+                WHERE IdEmpleado = @id
+                `)
+
+        return result.recordset[0];
+
+    } catch (error) {
+        console.error("Error searchForWorker", error);
+        throw error;
+    }
+}
+
+async function searchUserWeb(id) {
+    try {
+        const pool = await poolPromise;
+        const request = await pool.request()
+            .input('id', sql.Int, id)
+            .query(`
+                SELECT 
+                IdEmpleado
+                FROM UsuariosRolesWeb
+                WHERE IdUsuarioWeb = @id
+                `);
+        if (!request.recordset.length || !request.recordset[0].IdEmpleado) {
+            console.warn(`⚠️ No se encontró relación en UsuariosRolesWeb para IdUsuarioWeb=${id}`);
+            return null;
+        }
+        return request.recordset[0].IdEmpleado;
+    } catch (error) {
+        console.error("Error searchUserWeb", error);
+        throw error;
+    }
+}
+//DAO EMPLEADO XD
+
 /*
 CREATE TABLE ReporteEnfermera (
     IdReporteEnfermera INT IDENTITY(1,1),
@@ -254,5 +303,7 @@ module.exports = {
     searchByCode,
     searchById,
     searchEnfermeras,
-    searchTecnicos
+    searchTecnicos,
+    searchForWorker,
+    searchUserWeb
 }

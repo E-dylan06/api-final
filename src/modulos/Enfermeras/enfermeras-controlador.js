@@ -34,7 +34,9 @@ router.get('/buscar', async (req, res) => {
 router.post('/crear', async (req, res) => {
     try {
         const reporte = req.body;
+        console.log(reporte);
         const respon = await service.createReport(reporte);
+        console.log(respon);
         /*if (!respon.success) {
             err = "codigo invalido";
             return respuesta.error(req, res, err, 401);

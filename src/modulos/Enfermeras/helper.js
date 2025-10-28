@@ -1,10 +1,18 @@
-function helper(dato, comentarios = []) {
+function helper(dato, comentarios = [], datosEmpleado) {
+
+    if (!datosEmpleado) {
+        console.error("❌ Error en helper: datosEmpleado no fue encontrado.");
+        console.log("Dato recibido:", dato);
+        throw new Error("No se pudo obtener la información del empleado.");
+    }
+
     const fecha = new Date().toLocaleString();
 
     const nuevoComentario = {
         fecha,
-        nombre: dato.nombreCompleto,
-        dni: dato.dni,
+        nombre: datosEmpleado.nombreCompleto,
+        dni: datosEmpleado.dni,
+        idEmpleado: datosEmpleado.idEmpleado,
         razon: dato.razon,
         comentario: dato.comentario
     };
