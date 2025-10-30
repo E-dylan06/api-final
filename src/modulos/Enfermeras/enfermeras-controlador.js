@@ -7,13 +7,14 @@ const respuesta = require('../../respuestas/respuesta')
 //get 
 router.get('/', async (req, res) => {
     try {
-        const respon = await service.getAllTables();
+        const pagina = parseInt(req.query.page) || 1;
+        const respon = await service.getAllTables(pagina);
         respuesta.success(req, res, respon, 200);
     } catch (err) {
         console.error("error en el controller de enfermeras", err);
         respuesta.error(req, res, err, 500)
     }
-});
+});      
 
 router.get('/buscar', async (req, res) => {
     try {

@@ -1,24 +1,45 @@
 const poolPromise = require('../../infraestructura/conexionDB');
 const sql = require('mssql');
 
-async function getAllTables() {
+async function getAllTables(pagina = 1, tamanoPagina = 10) {
     try {
         const pool = await poolPromise;
+
         const result = await pool.request()
+            .input('pagina', sql.Int, pagina)
+            .input('tamanoPagina', sql.Int, tamanoPagina)
             .query(`
-                    SELECT 
+                SELECT 
                     IdReporteEnfermera,
                     Codigo,
                     Turno,
-                    FechaHora                    
-                    FROM ReporteEnfermera
-                `)
-        return { listaReportes: result.recordset, count: result.recordset.length };
+                    FechaHora
+                FROM ReporteEnfermera
+                ORDER BY IdReporteEnfermera DESC
+                OFFSET (@pagina - 1) * @tamanoPagina ROWS
+                FETCH NEXT @tamanoPagina ROWS ONLY;
+                SELECT COUNT(*) AS TotalRegistros FROM ReporteEnfermera;
+            `);
+
+        // result.recordsets[0] = datos paginados
+        // result.recordsets[1] = total de registros
+        const listaReportes = result.recordsets[0];
+        const totalRegistros = result.recordsets[1][0].TotalRegistros;
+
+        return {
+            listaReportes,
+            totalRegistros,
+            pagina,
+            tamanoPagina,
+            totalPaginas: Math.ceil(totalRegistros / tamanoPagina)
+        };
+
     } catch (error) {
-        console.error("hubo un error en el segmenteo de getALL de enfermeras", error);
+        console.error("❌ Error en getAllTables (paginado)", error);
         throw error;
     }
 }
+
 
 async function createReport(reporte) {
     try {
@@ -132,23 +153,31 @@ async function searchById(id) {
         const result = await pool.request()
             .input('Id', sql.Int, id)
             .query(`
-                    SELECT
-                    r.IdReporteEnfermera,
-                    ISNULL(e.ApellidoPaterno, '') + ' ' + 
-                    ISNULL(e.ApellidoMaterno, '') + ' ' + 
-                    ISNULL(e.Nombres, '') AS NombreCompleto,    
-                    e.DNI AS DniEmpleado, 
-                    r.Turno,
-                    r.Codigo,
-                    r.FechaHora,
-                    r.EnfermerasTurno,
-                    r.TecnicosTurno,
-                    r.Reporte,
-                    r.Observacion,
-                    r.Comentarios
-                    FROM ReporteEnfermera r 
-                    INNER JOIN Empleados AS e ON e.IdEmpleado = r. IdEmpleado
-                    WHERE IdReporteEnfermera = @Id
+SELECT
+    r.IdReporteEnfermera,
+    CONCAT(
+        UPPER(LEFT(e.ApellidoPaterno COLLATE Modern_Spanish_CI_AS, 1)),
+        LOWER(SUBSTRING(e.ApellidoPaterno COLLATE Modern_Spanish_CI_AS, 2, LEN(e.ApellidoPaterno))),
+        ' ',
+        UPPER(LEFT(e.ApellidoMaterno COLLATE Modern_Spanish_CI_AS, 1)),
+        LOWER(SUBSTRING(e.ApellidoMaterno COLLATE Modern_Spanish_CI_AS, 2, LEN(e.ApellidoMaterno))),
+        ', ',
+        UPPER(LEFT(e.Nombres COLLATE Modern_Spanish_CI_AS, 1)),
+        LOWER(SUBSTRING(e.Nombres COLLATE Modern_Spanish_CI_AS, 2, LEN(e.Nombres)))
+    ) AS NombreCompleto,
+    e.DNI AS DniEmpleado,
+    r.Turno,
+    r.Codigo,
+    r.FechaHora,
+    r.EnfermerasTurno,
+    r.TecnicosTurno,
+    r.Reporte,
+    r.Observacion,
+    r.Comentarios
+FROM ReporteEnfermera AS r
+INNER JOIN Empleados AS e ON e.IdEmpleado = r.IdEmpleado
+WHERE r.IdReporteEnfermera = @Id;
+
                 `);
         return result.recordset[0];
     } catch (error) {
@@ -169,13 +198,20 @@ async function searchEnfermeras(dnis = []) {
             return `@${paramName}`
         });
         const query = `
-                SELECT
-                    ISNULL(ApellidoPaterno, '') + ' ' +
-                    ISNULL(ApellidoMaterno, '') + ' ' +
-                    ISNULL(Nombres, '') AS NombreCompleto,
-                    DNI
-                FROM Empleados
-                WHERE DNI IN (${param.join(',')})
+SELECT
+    DNI,
+    CONCAT(
+        UPPER(LEFT(ISNULL(ApellidoPaterno COLLATE DATABASE_DEFAULT, ''), 1)),
+        LOWER(SUBSTRING(ISNULL(ApellidoPaterno COLLATE DATABASE_DEFAULT, ''), 2, LEN(ApellidoPaterno))),
+        ' ',
+        UPPER(LEFT(ISNULL(ApellidoMaterno COLLATE DATABASE_DEFAULT, ''), 1)),
+        LOWER(SUBSTRING(ISNULL(ApellidoMaterno COLLATE DATABASE_DEFAULT, ''), 2, LEN(ApellidoMaterno))),
+        ', ',
+        UPPER(LEFT(ISNULL(Nombres COLLATE DATABASE_DEFAULT, ''), 1)),
+        LOWER(SUBSTRING(ISNULL(Nombres COLLATE DATABASE_DEFAULT, ''), 2, LEN(Nombres)))
+    ) AS NombreCompleto
+FROM Empleados
+WHERE DNI IN (${param.join(',')});
                 `;
         const result = await request.query(query);
 
@@ -198,13 +234,20 @@ async function searchTecnicos(dnis = []) {
             return `@${paramName}`
         });
         const query = `
-                SELECT
-                    DNI,
-                    ISNULL(ApellidoPaterno,'') + ' ' +
-                    ISNULL(ApellidoMaterno,'') + ' ' +
-                    ISNULL(Nombres,'') AS NombreCompleto
-                FROM Empleados
-                WHERE DNI IN (${param.join(',')})
+SELECT
+    DNI,
+    CONCAT(
+        UPPER(LEFT(ISNULL(ApellidoPaterno COLLATE DATABASE_DEFAULT, ''), 1)),
+        LOWER(SUBSTRING(ISNULL(ApellidoPaterno COLLATE DATABASE_DEFAULT, ''), 2, LEN(ApellidoPaterno))),
+        ' ',
+        UPPER(LEFT(ISNULL(ApellidoMaterno COLLATE DATABASE_DEFAULT, ''), 1)),
+        LOWER(SUBSTRING(ISNULL(ApellidoMaterno COLLATE DATABASE_DEFAULT, ''), 2, LEN(ApellidoMaterno))),
+        ', ',
+        UPPER(LEFT(ISNULL(Nombres COLLATE DATABASE_DEFAULT, ''), 1)),
+        LOWER(SUBSTRING(ISNULL(Nombres COLLATE DATABASE_DEFAULT, ''), 2, LEN(Nombres)))
+    ) AS NombreCompleto
+FROM Empleados
+WHERE DNI IN (${param.join(',')});
             `;
         const result = await request.query(query);
         return result.recordset;
@@ -222,14 +265,20 @@ async function searchForWorker(id) {
         const result = await pool.request()
             .input('id', sql.Int, id)
             .query(`
-                SELECT
-                IdEmpleado as idEmpleado,
-                ISNULL(ApellidoPaterno, '') + ' ' +
-                ISNULL(ApellidoMaterno, '') + ' ' +
-                ISNULL(Nombres, '') AS nombreCompleto,
-                DNI AS dni
-                FROM  empleados
-                WHERE IdEmpleado = @id
+            SELECT
+                DNI,
+                CONCAT(
+                    UPPER(LEFT(ISNULL(ApellidoPaterno COLLATE DATABASE_DEFAULT, ''), 1)),
+                    LOWER(SUBSTRING(ISNULL(ApellidoPaterno COLLATE DATABASE_DEFAULT, ''), 2, LEN(ApellidoPaterno))),
+                    ' ',
+                    UPPER(LEFT(ISNULL(ApellidoMaterno COLLATE DATABASE_DEFAULT, ''), 1)),
+                    LOWER(SUBSTRING(ISNULL(ApellidoMaterno COLLATE DATABASE_DEFAULT, ''), 2, LEN(ApellidoMaterno))),
+                    ', ',
+                    UPPER(LEFT(ISNULL(Nombres COLLATE DATABASE_DEFAULT, ''), 1)),
+                    LOWER(SUBSTRING(ISNULL(Nombres COLLATE DATABASE_DEFAULT, ''), 2, LEN(Nombres)))
+                ) AS NombreCompleto
+            FROM Empleados
+            WHERE IdEmpleado = @id;
                 `)
 
         return result.recordset[0];
@@ -261,6 +310,13 @@ async function searchUserWeb(id) {
         throw error;
     }
 }
+
+
+
+
+
+
+
 //DAO EMPLEADO XD
 
 /*

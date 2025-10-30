@@ -10,8 +10,8 @@ function helper(dato, comentarios = [], datosEmpleado) {
 
     const nuevoComentario = {
         fecha,
-        nombre: datosEmpleado.nombreCompleto,
-        dni: datosEmpleado.dni,
+        nombre: datosEmpleado.NombreCompleto,
+        dni: datosEmpleado.DNI,
         idEmpleado: datosEmpleado.idEmpleado,
         razon: dato.razon,
         comentario: dato.comentario

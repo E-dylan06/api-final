@@ -21,6 +21,7 @@ async function login(empleado) {
         );
 
         return {
+            IdEmpleado:result.IdEmpleado,
             IdUsuarioWeb: result.IdUsuarioWeb,
             rol : result.IdRolesWeb,
             token

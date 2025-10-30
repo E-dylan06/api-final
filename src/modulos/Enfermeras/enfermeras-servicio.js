@@ -1,8 +1,8 @@
 const db = require('./enfermeras-dao.js');
 const helper = require('./helper.js')
 
-function getAllTables() {
-    return db.getAllTables();
+function getAllTables(pagina) {
+    return db.getAllTables(pagina);
 }
 
 
@@ -14,7 +14,8 @@ function createReport(reporte) {
 async function modifyReport(dato) {
     let comentarios = [];
 
-    const contenido = await db.bringsComments(dato.id);
+    const contenido = await db.bringsComments(dato.idReporte);
+    console.log.contenido
 
     if (contenido.length > 0 && contenido[0].Comentarios) {
         comentarios = JSON.parse(contenido[0].Comentarios);
@@ -23,10 +24,10 @@ async function modifyReport(dato) {
     const empleado = parseInt(await db.searchUserWeb(dato.idWeb));
     console.log(empleado)
     const datosEmpleado = await db.searchForWorker(empleado);
-    console.log(datosEmpleado)
+    console.log("datos de empleado",datosEmpleado)
 
     const comentariosNuevos = helper.helper(dato, comentarios, datosEmpleado);
-
+    console.log(comentariosNuevos)
     await db.update(dato.idReporte, JSON.stringify(comentariosNuevos));
 
     return {
