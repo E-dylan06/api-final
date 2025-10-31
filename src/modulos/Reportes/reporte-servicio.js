@@ -31,8 +31,19 @@ function normalizarRegistro(obj) {
 
 
 
-async function reporteEnfermera(Id) {
-    const reporte = await dbEnf.searchById(id);
-    return pdfEnf.generarEnfermeraPDF(reporte, res);
+async function reporteEnfermera(id, res) {
+    try {
+        const reporteJSON = await dbEnf.searchById(id);
+        if (!reporteJSON) {
+            throw new Error('Reporte no encontrado');
+        }
+
+        // Enviar el JSON completo al generador de PDF
+        return pdfEnf.generarEnfermeraPDF(reporteJSON, res);
+
+    } catch (error) {
+        console.error('Error en servicio de reporte:', error);
+        throw error;
+    }
 }
 module.exports = { FilterReport, reporteEnfermera };

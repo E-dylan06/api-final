@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
         console.error("error en el controller de enfermeras", err);
         respuesta.error(req, res, err, 500)
     }
-});      
+});
 
 router.get('/buscar', async (req, res) => {
     try {
@@ -35,13 +35,7 @@ router.get('/buscar', async (req, res) => {
 router.post('/crear', async (req, res) => {
     try {
         const reporte = req.body;
-        console.log(reporte);
         const respon = await service.createReport(reporte);
-        console.log(respon);
-        /*if (!respon.success) {
-            err = "codigo invalido";
-            return respuesta.error(req, res, err, 401);
-        }*/
         respuesta.success(req, res, respon, 200);
     } catch (err) {
         console.error("error en el controller de enfermeras", err);

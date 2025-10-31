@@ -18,7 +18,8 @@ const app = express();
 // Middlewares
 app.use(cors({
     origin: true,
-    credentials: true
+    credentials: true,
+    exposedHeaders: ["Content-Disposition"]
 }));
 
 app.use(express.json());

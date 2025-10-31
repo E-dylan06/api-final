@@ -56,7 +56,6 @@ async function FilterReport(filtros) {
                 )
                 ORDER BY t.FechaHora DESC
             `);
-        console.log("📊 Resultados SQL:", result.recordset);
         return result.recordset;
     } catch (err) {
         throw err;

@@ -96,7 +96,6 @@ async function update(id, comentariosJSON) {
             SET Comentarios = @Comentario
             WHERE IdReporteEnfermera = @Id
             `)
-        console.log("✅ Comentarios actualizados correctamente");
     } catch (error) {
         console.error("hubo un error en el segmenteo de update de enfermeras", error);
         throw error;

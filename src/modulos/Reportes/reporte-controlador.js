@@ -8,8 +8,6 @@ const respuesta = require('../../respuestas/respuesta');
 router.post('/', async (req, res) => {
     try {
         const datosFiltro = req.body;
-        console.log("👉 Filtros recibidos:", req.body);
-
         await service.FilterReport(datosFiltro, res);
     } catch (err) {
         console.error("Error en controlador reporte:", err);
@@ -19,10 +17,9 @@ router.post('/', async (req, res) => {
 
 router.post('/enfermera', async (req, res) => {
     try {
-        const data = req.body;
-        console.log("dato que a sido enviado", data);
-        await service.reporteEnfermera(data);
-    } catch (error) {
+        const { id } = req.body;
+        await service.reporteEnfermera(id, res);
+    } catch (err) {
         console.error("Error en controlador reporte:", err);
         respuesta.error(req, res, "Error generando reporte", 500);
     }
