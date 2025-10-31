@@ -2,6 +2,8 @@
 const db = require('./reporte-dao');
 const pdf = require('./reporte-pdf');
 const method = require('../Servicios/servicio-servicio');
+const dbEnf = require('../Enfermeras/enfermeras-servicio');
+const pdfEnf = require('./reporte-enfermera-pdf');
 
 async function FilterReport(filtroReportes, res) {
     // 1. Obtener datos desde el DAO
@@ -27,4 +29,10 @@ function normalizarRegistro(obj) {
     return result;
 }
 
-module.exports = { FilterReport };
+
+
+async function reporteEnfermera(Id) {
+    const reporte = await dbEnf.searchById(id);
+    return pdfEnf.generarEnfermeraPDF(reporte, res);
+}
+module.exports = { FilterReport, reporteEnfermera };

@@ -1,4 +1,4 @@
-// reporte-pdf.js
+// reporte-triaje-pdf.js
 const PDFDocument = require("pdfkit-table");
 const path = require("path");
 

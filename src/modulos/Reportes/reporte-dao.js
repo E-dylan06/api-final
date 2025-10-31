@@ -63,6 +63,19 @@ async function FilterReport(filtros) {
     }
 }
 
+///
+
+// REPORTE DE ENFERMERA INDIVIDUALMENTE 
+
+////
+
+
+
+async function reporte(params) {
+    
+}
+
+
 
 module.exports = {
     FilterReport

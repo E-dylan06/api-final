@@ -17,4 +17,15 @@ router.post('/', async (req, res) => {
     }
 });
 
+router.post('/enfermera', async (req, res) => {
+    try {
+        const data = req.body;
+        console.log("dato que a sido enviado", data);
+        await service.reporteEnfermera(data);
+    } catch (error) {
+        console.error("Error en controlador reporte:", err);
+        respuesta.error(req, res, "Error generando reporte", 500);
+    }
+})
+
 module.exports = router;
