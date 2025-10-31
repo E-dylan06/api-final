@@ -13,14 +13,19 @@ function generarEnfermeraPDF(data, res) {
         // Configurar headers para descarga
         // 🕓 Crear nombre del archivo con código y fecha
         const codigo = data.codigo || 'enfermera';
-        const fecha = new Date().toISOString()
-            .slice(0, 16) // "2025-10-31T09:45"
-            .replace('T', '_')
-            .replace(':', '-'); // cambia ":" por "-" para que no falle en Windows
-
+        const fecha = new Date().toLocaleString('es-PE', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false,
+            timeZone: 'America/Lima'
+        })
+            .replace(/[\/,]/g, '-')   // elimina "/" y ","
+            .replace(/\s+/g, '_')     // espacios → guiones bajos
+            .replace(':', '-');
         const nombreArchivo = `Reporte_${codigo}_${fecha}.pdf`;
-        console.log("nombre en el backend",nombreArchivo);
-
         // 📄 Configurar headers
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${nombreArchivo}"`);
