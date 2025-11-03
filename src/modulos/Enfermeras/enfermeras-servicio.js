@@ -60,10 +60,28 @@ async function searchById(id) {
     const resultado = helper.jsonReporte(reporte, listaEnfermeras, listaTecnicos);
     return resultado;
 }
+
+
+async function getFilteredTables(datos) {
+    // Extraer paginación
+    const pagina = parseInt(datos.pagina) || 1;
+    const tamanoPagina = parseInt(datos.tamanoPagina) || 10;
+
+    // Extraer y limpiar filtros
+    const filtros = {};
+    if (datos.codigo) filtros.codigo = datos.codigo;
+    if (datos.fechaInicial) filtros.fechaInicial = datos.fechaInicial;
+    if (datos.fechaFinal) filtros.fechaFinal = datos.fechaFinal;
+    if (datos.enfermera) filtros.enfermera = parseInt(datos.enfermera);
+
+    return db.getFilteredTables(pagina, tamanoPagina, filtros);
+}
+
 module.exports = {
     createReport,
     getAllTables,
     modifyReport,
     searchByCode,
-    searchById
+    searchById,
+    getFilteredTables
 }

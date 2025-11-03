@@ -310,7 +310,85 @@ async function searchUserWeb(id) {
     }
 }
 
-
+async function getFilteredTables(
+    pagina = 1, 
+    tamanoPagina = 10,
+    filtros = {} // { codigo, fechaInicial, fechaFinal, enfermera }
+) {
+    try {
+        const pool = await poolPromise;
+        const request = pool.request();
+        
+        // Parámetros de paginación
+        request.input('pagina', sql.Int, pagina);
+        request.input('tamanoPagina', sql.Int, tamanoPagina);
+        
+        // Construir la cláusula WHERE dinámicamente
+        let whereConditions = [];
+        
+        // Filtro por código
+        if (filtros.codigo) {
+            request.input('codigo', sql.VarChar, filtros.codigo);
+            whereConditions.push('Codigo LIKE @codigo + \'%\'');
+        }
+        
+        // Filtro por ID de enfermera
+        if (filtros.enfermera) {
+            request.input('enfermera', sql.Int, filtros.enfermera);
+            whereConditions.push('IdEnfermera = @enfermera'); // Ajusta el nombre del campo según tu tabla
+        }
+        
+        // Filtro por rango de fechas
+        if (filtros.fechaInicial) {
+            request.input('fechaInicial', sql.DateTime, filtros.fechaInicial);
+            whereConditions.push('FechaHora >= @fechaInicial');
+        }
+        
+        if (filtros.fechaFinal) {
+            request.input('fechaFinal', sql.DateTime, filtros.fechaFinal);
+            whereConditions.push('FechaHora <= @fechaFinal');
+        }
+        
+        // Construir el WHERE clause
+        const whereClause = whereConditions.length > 0 
+            ? 'WHERE ' + whereConditions.join(' AND ')
+            : '';
+        
+        const query = `
+            SELECT 
+                IdReporteEnfermera,
+                Codigo,
+                Turno,
+                FechaHora
+            FROM ReporteEnfermera
+            ${whereClause}
+            ORDER BY IdReporteEnfermera DESC
+            OFFSET (@pagina - 1) * @tamanoPagina ROWS
+            FETCH NEXT @tamanoPagina ROWS ONLY;
+            
+            SELECT COUNT(*) AS TotalRegistros 
+            FROM ReporteEnfermera
+            ${whereClause};
+        `;
+        
+        const result = await request.query(query);
+        
+        const listaReportes = result.recordsets[0];
+        const totalRegistros = result.recordsets[1][0].TotalRegistros;
+        
+        return {
+            listaReportes,
+            totalRegistros,
+            pagina,
+            tamanoPagina,
+            totalPaginas: Math.ceil(totalRegistros / tamanoPagina),
+            filtrosAplicados: filtros
+        };
+    } catch (error) {
+        console.error("❌ Error en getFilteredTables", error);
+        throw error;
+    }
+}
 
 
 
@@ -360,5 +438,6 @@ module.exports = {
     searchEnfermeras,
     searchTecnicos,
     searchForWorker,
-    searchUserWeb
+    searchUserWeb,
+    getFilteredTables
 }

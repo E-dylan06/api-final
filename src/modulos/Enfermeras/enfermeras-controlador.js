@@ -69,4 +69,15 @@ router.get('/reporteEspecifico', async (req, res) => {
         respuesta.error(req, res, error, 500)
     }
 });
+
+router.post('/filtrar', async (req, res) => {
+    try {
+        const respon = await service.getFilteredTables(req.body);
+        respuesta.success(req, res, respon, 200);
+    } catch (err) {
+        console.error("error en el controller de filtrado", err);
+        respuesta.error(req, res, err, 500);
+    }
+});
+
 module.exports = router;
