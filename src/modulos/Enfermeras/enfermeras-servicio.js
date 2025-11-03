@@ -79,7 +79,7 @@ async function getFilteredTables(datos) {
 
 
 function getNurses() {
-    return db.getNurses();
+    return db.getNurse();
 }
 module.exports = {
     createReport,

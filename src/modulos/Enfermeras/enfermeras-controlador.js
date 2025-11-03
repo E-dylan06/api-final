@@ -20,7 +20,7 @@ router.get('/enfermeras', async (req, res) => {
     try {
         const respon = await service.getNurses();
         respuesta.success(req, res, respon, 200);
-    } catch (error) {
+    } catch (err) {
         console.error("error en el controller de enfermeras", err);
         respuesta.error(req, res, err, 500)
     }

@@ -335,7 +335,7 @@ async function getFilteredTables(
         // Filtro por ID de enfermera
         if (filtros.enfermera) {
             request.input('enfermera', sql.Int, filtros.enfermera);
-            whereConditions.push('IdEnfermera = @enfermera'); // Ajusta el nombre del campo según tu tabla
+            whereConditions.push('IdEmpleado = @enfermera');
         }
 
         // Filtro por rango de fechas
@@ -345,8 +345,10 @@ async function getFilteredTables(
         }
 
         if (filtros.fechaFinal) {
-            request.input('fechaFinal', sql.DateTime, filtros.fechaFinal);
-            whereConditions.push('FechaHora <= @fechaFinal');
+            const fechaFinal = new Date(filtros.fechaFinal);
+            fechaFinal.setDate(fechaFinal.getDate() + 1);
+            request.input('fechaFinal', sql.DateTime, fechaFinal);
+            whereConditions.push('FechaHora < @fechaFinal');
         }
 
         // Construir el WHERE clause
@@ -393,7 +395,7 @@ async function getFilteredTables(
 async function getNurse() {
     try {
         const pool = await poolPromise;
-        const request = pool.request()
+        const request = await pool.request()
             .query(`
             SELECT 
                 E.idEmpleado,
@@ -409,9 +411,10 @@ async function getNurse() {
                 ) AS NombreCompleto
             FROM Empleados E
             INNER JOIN UsuariosRolesWeb URW
-                ON E.idEmpleado = URW.idEmpleado
-            WHERE URW.Rol = 7;
+                ON E.IdEmpleado = URW.IdEmpleado
+            WHERE URW.IdRolesWeb = 7;
             `)
+        return request.recordset;
     } catch (error) {
         console.error("❌ Error en getNurse", error);
         throw error;
@@ -466,5 +469,6 @@ module.exports = {
     searchTecnicos,
     searchForWorker,
     searchUserWeb,
-    getFilteredTables
+    getFilteredTables,
+    getNurse
 }
