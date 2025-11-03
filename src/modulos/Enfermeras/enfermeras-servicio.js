@@ -77,11 +77,16 @@ async function getFilteredTables(datos) {
     return db.getFilteredTables(pagina, tamanoPagina, filtros);
 }
 
+
+function getNurses() {
+    return db.getNurses();
+}
 module.exports = {
     createReport,
     getAllTables,
     modifyReport,
     searchByCode,
     searchById,
-    getFilteredTables
+    getFilteredTables,
+    getNurses
 }

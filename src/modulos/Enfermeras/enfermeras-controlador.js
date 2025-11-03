@@ -16,6 +16,16 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get('/enfermeras', async (req, res) => {
+    try {
+        const respon = await service.getNurses();
+        respuesta.success(req, res, respon, 200);
+    } catch (error) {
+        console.error("error en el controller de enfermeras", err);
+        respuesta.error(req, res, err, 500)
+    }
+})
+
 router.get('/buscar', async (req, res) => {
     try {
         const { codigo } = req.query;

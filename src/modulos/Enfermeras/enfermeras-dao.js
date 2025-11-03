@@ -311,49 +311,49 @@ async function searchUserWeb(id) {
 }
 
 async function getFilteredTables(
-    pagina = 1, 
+    pagina = 1,
     tamanoPagina = 10,
     filtros = {} // { codigo, fechaInicial, fechaFinal, enfermera }
 ) {
     try {
         const pool = await poolPromise;
         const request = pool.request();
-        
+
         // Parámetros de paginación
         request.input('pagina', sql.Int, pagina);
         request.input('tamanoPagina', sql.Int, tamanoPagina);
-        
+
         // Construir la cláusula WHERE dinámicamente
         let whereConditions = [];
-        
+
         // Filtro por código
         if (filtros.codigo) {
             request.input('codigo', sql.VarChar, filtros.codigo);
             whereConditions.push('Codigo LIKE @codigo + \'%\'');
         }
-        
+
         // Filtro por ID de enfermera
         if (filtros.enfermera) {
             request.input('enfermera', sql.Int, filtros.enfermera);
             whereConditions.push('IdEnfermera = @enfermera'); // Ajusta el nombre del campo según tu tabla
         }
-        
+
         // Filtro por rango de fechas
         if (filtros.fechaInicial) {
             request.input('fechaInicial', sql.DateTime, filtros.fechaInicial);
             whereConditions.push('FechaHora >= @fechaInicial');
         }
-        
+
         if (filtros.fechaFinal) {
             request.input('fechaFinal', sql.DateTime, filtros.fechaFinal);
             whereConditions.push('FechaHora <= @fechaFinal');
         }
-        
+
         // Construir el WHERE clause
-        const whereClause = whereConditions.length > 0 
+        const whereClause = whereConditions.length > 0
             ? 'WHERE ' + whereConditions.join(' AND ')
             : '';
-        
+
         const query = `
             SELECT 
                 IdReporteEnfermera,
@@ -370,12 +370,12 @@ async function getFilteredTables(
             FROM ReporteEnfermera
             ${whereClause};
         `;
-        
+
         const result = await request.query(query);
-        
+
         const listaReportes = result.recordsets[0];
         const totalRegistros = result.recordsets[1][0].TotalRegistros;
-        
+
         return {
             listaReportes,
             totalRegistros,
@@ -390,6 +390,33 @@ async function getFilteredTables(
     }
 }
 
+async function getNurse() {
+    try {
+        const pool = await poolPromise;
+        const request = pool.request()
+            .query(`
+            SELECT 
+                E.idEmpleado,
+                CONCAT(
+                    UPPER(LEFT(ISNULL(E.ApellidoPaterno COLLATE DATABASE_DEFAULT, ''), 1)),
+                    LOWER(SUBSTRING(ISNULL(E.ApellidoPaterno COLLATE DATABASE_DEFAULT, ''), 2, LEN(E.ApellidoPaterno))),
+                    ' ',
+                    UPPER(LEFT(ISNULL(E.ApellidoMaterno COLLATE DATABASE_DEFAULT, ''), 1)),
+                    LOWER(SUBSTRING(ISNULL(E.ApellidoMaterno COLLATE DATABASE_DEFAULT, ''), 2, LEN(E.ApellidoMaterno))),
+                    ', ',
+                    UPPER(LEFT(ISNULL(E.Nombres COLLATE DATABASE_DEFAULT, ''), 1)),
+                    LOWER(SUBSTRING(ISNULL(E.Nombres COLLATE DATABASE_DEFAULT, ''), 2, LEN(E.Nombres)))
+                ) AS NombreCompleto
+            FROM Empleados E
+            INNER JOIN UsuariosRolesWeb URW
+                ON E.idEmpleado = URW.idEmpleado
+            WHERE URW.Rol = 7;
+            `)
+    } catch (error) {
+        console.error("❌ Error en getNurse", error);
+        throw error;
+    }
+}
 
 
 
